@@ -1,0 +1,193 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System.Linq;
+using UnityEditor.UI;
+using UnityEngine.UI;
+using UnityEditor.Search;
+
+public class Board : MonoBehaviour
+{
+    public List<GameObject> chessboard = new List<GameObject>();
+    public List<GameObject> pieces = new List<GameObject>();
+    public List<GameObject> positions = new List<GameObject>();
+    public bool whiteTurn = true;
+    public List<GameObject> whitePieces = new List<GameObject>();
+    public List<GameObject> blackPieces = new List<GameObject>();
+    public GameObject whiteKing;
+    public GameObject blackKing;
+    public Text blackScoreText;
+    public Text whiteScoreText;
+
+    public Sprite whiteQueen;
+    public Sprite blackQueen;
+
+    [HideInInspector]
+    public Piece highlightedPiece;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        for (int i = 0; i < chessboard.Count; i++)
+        {
+            chessboard[i].GetComponent<BoardPiece>().pos = i;
+        }
+        foreach (GameObject piece in pieces)
+        {
+            piece.transform.position = chessboard[piece.GetComponent<Piece>().pos].transform.position;
+            positions[piece.GetComponent<Piece>().pos] = piece;
+        }
+    }
+
+    public void changeHighlightedPiece(Piece newPiece)
+    {
+        if (highlightedPiece)
+        {
+            highlightedPiece.GetComponent<SpriteRenderer>().color = Color.white;
+            ResetBoardState();
+        }
+        highlightedPiece = newPiece;
+        highlightedPiece.GetComponent<SpriteRenderer>().color = Color.yellow;
+    }
+
+    public void moveHighlightedPiece(int newPos, int castles)
+    {
+        updatePositions(newPos, castles, false);
+
+        whiteTurn = !whiteTurn;
+        foreach (GameObject piece in whitePieces)
+        {
+            piece.GetComponent<BoxCollider2D>().enabled = whiteTurn ? true : false;
+        }
+        foreach (GameObject piece in blackPieces)
+        {
+            piece.GetComponent<BoxCollider2D>().enabled = whiteTurn ? false : true;
+        }
+
+        ResetBoardState();
+        updateScore();
+    }
+
+    void updatePositions(int newPos, int castles, bool test)
+    {
+        // Delete captured piece
+        if (positions[newPos])
+        {
+            if (whiteTurn)
+            {
+                blackPieces.Remove(positions[newPos].gameObject);
+            }
+            else
+            {
+                whitePieces.Remove(positions[newPos].gameObject);
+            }
+            if (!test)
+            {
+                Destroy(positions[newPos].gameObject);
+            }
+        }
+
+        // Move piece and update position
+        positions[highlightedPiece.pos] = null;
+        if (!test)
+        {
+            highlightedPiece.pos = newPos;
+        }
+        positions[newPos] = highlightedPiece.gameObject;
+        if (!test)
+        {
+            highlightedPiece.transform.position = chessboard[newPos].transform.position;
+        }
+        if (castles == 1)
+        {
+            positions[5] = positions[7];
+            if (!test)
+            {
+                positions[5].GetComponent<Piece>().pos = 5;
+                positions[5].transform.position = chessboard[5].transform.position;
+            }
+            positions[7] = null;
+        }
+        if (castles == 2)
+        {
+            positions[3] = positions[0];
+            if (!test)
+            {
+                positions[3].GetComponent<Piece>().pos = 3;
+                positions[3].transform.position = chessboard[3].transform.position;
+            }
+            positions[0] = null;
+        }
+        if (castles == 3)
+        {
+            positions[61] = positions[63];
+            if (!test)
+            {
+                positions[61].GetComponent<Piece>().pos = 61;
+                positions[61].transform.position = chessboard[61].transform.position;
+            }
+            positions[63] = null;
+        }
+        if (castles == 4)
+        {
+            positions[59] = positions[56];
+            if (!test)
+            {
+                positions[59].GetComponent<Piece>().pos = 59;
+                positions[59].transform.position = chessboard[59].transform.position;
+            }
+            positions[56] = null;
+        }
+
+        if (!test)
+        {
+            if (highlightedPiece.pawn && newPos > 55)
+            {
+                highlightedPiece.pawn = false;
+                highlightedPiece.bishop = true;
+                highlightedPiece.rook = true;
+                highlightedPiece.value = 10;
+                highlightedPiece.GetComponent<SpriteRenderer>().sprite = highlightedPiece.white ? whiteQueen : blackQueen;
+            }
+
+            // Resetting variables
+            highlightedPiece.firstMove = false;
+            highlightedPiece.GetComponent<SpriteRenderer>().color = Color.white;
+            highlightedPiece = null;
+        }
+    }
+
+    public void UpdateBoardState()
+    {
+        foreach (GameObject boardpiece in chessboard)
+        {
+            boardpiece.GetComponent<BoardPiece>().updateState();
+        }
+    }
+
+    public void ResetBoardState()
+    {
+        foreach (GameObject boardpiece in chessboard)
+        {
+            boardpiece.GetComponent<BoardPiece>().state = 0;
+            boardpiece.GetComponent<BoardPiece>().castles = 0;
+        }
+        UpdateBoardState();
+    }
+
+    void updateScore()
+    {
+        int blackScore = 0;
+        int whiteScore = 0;
+        foreach (GameObject piece in whitePieces)
+        {
+            whiteScore += piece.GetComponent<Piece>().value;
+        }
+        foreach (GameObject piece in blackPieces)
+        {
+            blackScore += piece.GetComponent<Piece>().value;
+        }
+        whiteScoreText.text = "White: " + (whiteScore - blackScore);
+        blackScoreText.text = "Black: " + (blackScore - whiteScore);
+    }
+}
