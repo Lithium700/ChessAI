@@ -1,0 +1,38 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
+using UnityEngine;
+
+public class BoardPiece : MonoBehaviour
+{
+    public int pos;
+    public int castles = 0; // No castles = 0, white short castles = 1, white long castles = 2, black short castles = 3, black long castles = 4
+    public int state = 0; // Nothing = 0, move = 1, capture = 2
+
+    public Sprite move;
+    public Sprite capture;
+
+    private void OnMouseDown()
+    {
+        transform.root.GetComponent<Board>().moveHighlightedPiece(pos, castles);
+    }
+
+    public void updateState()
+    {
+        if (state == 0)
+        {
+            GetComponent<SpriteRenderer>().sprite = null;
+            GetComponent<BoxCollider2D>().enabled = false;
+        }
+        if (state == 1)
+        {
+            GetComponent<SpriteRenderer>().sprite = move;
+            GetComponent<BoxCollider2D>().enabled = true;
+        }
+        if (state == 2)
+        {
+            GetComponent<SpriteRenderer>().sprite = capture;
+            GetComponent<BoxCollider2D>().enabled = true;
+        }
+    }
+}
