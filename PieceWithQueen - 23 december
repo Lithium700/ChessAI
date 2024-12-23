@@ -1,0 +1,1018 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+public class Piece : MonoBehaviour
+{
+    public int pos;
+    public bool pawn, knight, bishop, rook, queen, king;
+    public bool white = true;
+
+    public Sprite move;
+    public Sprite capture;
+
+    int[] aFile = { 0, 8, 16, 24, 32, 40, 48, 56 };
+    int[] bFile = { 1, 9, 17, 25, 33, 41, 49, 57 };
+    int[] gFile = { 6, 14, 22, 30, 38, 46, 54, 62 };
+    int[] hFile = { 7, 15, 23, 31, 39, 47, 55, 63 };
+    int[] sevenFile = { 47, 48, 49, 50, 51, 52, 53, 54 };
+    int[] twoFile = { 8, 9, 10, 11, 12, 13, 14, 15 };
+
+    // Pawn
+    [HideInInspector]
+    public bool firstMove = true;
+
+    Board board;
+
+    void Start()
+    {
+        board = GameObject.FindGameObjectWithTag("Board").GetComponent<Board>();
+        pos = pos - 1;
+    }
+
+    private void OnMouseDown()
+    {
+        board.changeHighlightedPiece(this);
+        CalculateMoves();
+        board.UpdateBoardState();
+    }
+
+    public void CalculateMoves()
+    {
+        if (pawn)
+        {
+            if (white && board.whiteTurn)
+            {
+                if (firstMove)
+                {
+                    if (!board.positions[pos + 8])
+                    {
+                        board.chessboard[pos + 8].GetComponent<BoardPiece>().state = 1;
+                        if (!board.positions[pos + 16])
+                        {
+                            board.chessboard[pos + 16].GetComponent<BoardPiece>().state = 1;
+                        }
+                    }
+                }
+                else
+                {
+                    if (pos + 8 < 64)
+                    {
+                        if (!board.positions[pos + 8])
+                        {
+                            board.chessboard[pos + 8].GetComponent<BoardPiece>().state = 1;
+                        }
+                    }
+                }
+                if (pos + 6 < 64)
+                {
+                    if (!aFile.Contains(pos))
+                    {
+                        if (board.positions[pos + 7] && !board.positions[pos + 7].GetComponent<Piece>().white)
+                        {
+                            board.chessboard[pos + 7].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                    if (!hFile.Contains(pos))
+                    {
+                        if (board.positions[pos + 9] && !board.positions[pos + 9].GetComponent<Piece>().white)
+                        {
+                            board.chessboard[pos + 9].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                }
+            }
+            else if (!white && !board.whiteTurn)
+            {
+                if (firstMove)
+                {
+                    if (!board.positions[pos - 8])
+                    {
+                        board.chessboard[pos - 8].GetComponent<BoardPiece>().state = 1;
+                        if (!board.positions[pos - 16])
+                        {
+                            board.chessboard[pos - 16].GetComponent<BoardPiece>().state = 1;
+                        }
+                    }
+                }
+                else
+                {
+                    if (pos - 8 > -1)
+                    {
+                        if (!board.positions[pos - 8])
+                        {
+                            board.chessboard[pos - 8].GetComponent<BoardPiece>().state = 1;
+                        }
+                    }
+                }
+                if (pos - 6 > -1)
+                {
+                    if (!hFile.Contains(pos))
+                    {
+                        if (board.positions[pos - 7] && board.positions[pos - 7].GetComponent<Piece>().white)
+                        {
+                            board.chessboard[pos - 7].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                    if (!aFile.Contains(pos))
+                    {
+                        if (board.positions[pos - 9] && board.positions[pos - 9].GetComponent<Piece>().white)
+                        {
+                            board.chessboard[pos - 9].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                }
+            }
+        }
+        if (knight)
+        {
+            if (!sevenFile.Contains(pos))
+            {
+                // Up left
+                if (!aFile.Contains(pos))
+                {
+                    if ((pos + 15) < 64)
+                    {
+                        if (!board.positions[pos + 15])
+                        {
+                            board.chessboard[pos + 15].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 15].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 15].GetComponent<BoardPiece>().state = 2;
+                        }
+                        else if (board.positions[pos + 15].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 15].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                }
+
+                // Up right
+                if (!hFile.Contains(pos))
+                {
+                    if ((pos + 17) < 64)
+                    {
+                        if (!board.positions[pos + 17])
+                        {
+                            board.chessboard[pos + 17].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 17].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 17].GetComponent<BoardPiece>().state = 2;
+                        }
+                        else if (board.positions[pos + 17].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 17].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                }
+            }
+            if (!gFile.Contains(pos) && !hFile.Contains(pos))
+            {
+                // Right up
+                if ((pos + 10) < 64)
+                {
+                    if (!board.positions[pos + 10])
+                    {
+                        board.chessboard[pos + 10].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos + 10].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos + 10].GetComponent<BoardPiece>().state = 2;
+                    }
+                    else if (board.positions[pos + 10].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos + 10].GetComponent<BoardPiece>().state = 2;
+                    }
+                }
+
+                // Right down
+                if ((pos - 6) > -1)
+                {
+                    if (!board.positions[pos - 6])
+                    {
+                        board.chessboard[pos - 6].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos - 6].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos - 6].GetComponent<BoardPiece>().state = 2;
+                    }
+                    else if (board.positions[pos - 6].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos - 6].GetComponent<BoardPiece>().state = 2;
+                    }
+                }
+            }
+            if (!twoFile.Contains(pos))
+            {
+                // Down right
+                if (!hFile.Contains(pos))
+                {
+                    if ((pos - 15) > -1)
+                    {
+                        if (!board.positions[pos - 15])
+                        {
+                            board.chessboard[pos - 15].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 15].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 15].GetComponent<BoardPiece>().state = 2;
+                        }
+                        else if (board.positions[pos - 15].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 15].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                }
+
+                // Down left
+                if (!aFile.Contains(pos))
+                {
+                    if ((pos - 17) > -1)
+                    {
+                        if (!board.positions[pos - 17])
+                        {
+                            board.chessboard[pos - 17].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 17].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 17].GetComponent<BoardPiece>().state = 2;
+                        }
+                        else if (board.positions[pos - 17].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 17].GetComponent<BoardPiece>().state = 2;
+                        }
+                    }
+                }
+            }
+            if (!aFile.Contains(pos) && !bFile.Contains(pos))
+            {
+                // Left down
+                if ((pos - 10) > -1)
+                {
+                    if (!board.positions[pos - 10])
+                    {
+                        board.chessboard[pos - 10].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos - 10].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos - 10].GetComponent<BoardPiece>().state = 2;
+                    }
+                    else if (board.positions[pos - 10].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos - 10].GetComponent<BoardPiece>().state = 2;
+                    }
+                }
+
+                // Left up
+                if ((pos + 6) < 64)
+                {
+                    if (!board.positions[pos + 6])
+                    {
+                        board.chessboard[pos + 6].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos + 6].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos + 6].GetComponent<BoardPiece>().state = 2;
+                    }
+                    else if (board.positions[pos + 6].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos + 6].GetComponent<BoardPiece>().state = 2;
+                    }
+                }
+            }
+        }
+        if (bishop)
+        {
+            // Up left
+            if (!aFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos + 7 * (i + 1)) < 64)
+                    {
+                        if (!board.positions[pos + 7 * (i + 1)])
+                        {
+                            board.chessboard[pos + 7 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 7 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos + 7 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (aFile.Contains(pos + 7 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Up right
+            if (!hFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos + 9 * (i + 1)) < 64)
+                    {
+                        if (!board.positions[pos + 9 * (i + 1)])
+                        {
+                            board.chessboard[pos + 9 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 9 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos + 9 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (hFile.Contains(pos + 9 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Down left
+            if (!aFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos - 9 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos - 9 * (i + 1)])
+                        {
+                            board.chessboard[pos - 9 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 9 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos - 9 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (aFile.Contains(pos - 9 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Down right
+            if (!hFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos - 7 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos - 7 * (i + 1)])
+                        {
+                            board.chessboard[pos - 7 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 7 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos - 7 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (hFile.Contains(pos - 7 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        if (rook)
+        {
+            // Up
+            for (int i = 0; i < 7; i++)
+            {
+                if ((pos + 8 * (i + 1)) < 64)
+                {
+                    if (!board.positions[pos + 8 * (i + 1)])
+                    {
+                        board.chessboard[pos + 8 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos + 8 * (i + 1)].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos + 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else if (board.positions[pos + 8 * (i + 1)].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos + 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            // Down
+            for (int i = 0; i < 7; i++)
+            {
+                if ((pos - 8 * (i + 1)) > -1)
+                {
+                    if (!board.positions[pos - 8 * (i + 1)])
+                    {
+                        board.chessboard[pos - 8 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos - 8 * (i + 1)].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos - 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else if (board.positions[pos - 8 * (i + 1)].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos - 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            // Left
+            if (!aFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos - 1 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos - 1 * (i + 1)])
+                        {
+                            board.chessboard[pos - 1 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 1 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos - 1 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (aFile.Contains(pos - 1 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Right
+            if (!hFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos + 1 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos + 1 * (i + 1)])
+                        {
+                            board.chessboard[pos + 1 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 1 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos + 1 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (hFile.Contains(pos + 1 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        if (queen)
+        {
+            // Up
+            for (int i = 0; i < 7; i++)
+            {
+                if ((pos + 8 * (i + 1)) < 64)
+                {
+                    if (!board.positions[pos + 8 * (i + 1)])
+                    {
+                        board.chessboard[pos + 8 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos + 8 * (i + 1)].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos + 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else if (board.positions[pos + 8 * (i + 1)].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos + 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            // Down
+            for (int i = 0; i < 7; i++)
+            {
+                if ((pos - 8 * (i + 1)) > -1)
+                {
+                    if (!board.positions[pos - 8 * (i + 1)])
+                    {
+                        board.chessboard[pos - 8 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                    }
+                    else if (!board.positions[pos - 8 * (i + 1)].GetComponent<Piece>().white && white)
+                    {
+                        board.chessboard[pos - 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else if (board.positions[pos - 8 * (i + 1)].GetComponent<Piece>().white && !white)
+                    {
+                        board.chessboard[pos - 8 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            // Left
+            if (!aFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos - 1 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos - 1 * (i + 1)])
+                        {
+                            board.chessboard[pos - 1 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 1 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos - 1 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (aFile.Contains(pos - 1 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Right
+            if (!hFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos + 1 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos + 1 * (i + 1)])
+                        {
+                            board.chessboard[pos + 1 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 1 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos + 1 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 1 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (hFile.Contains(pos + 1 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Up left
+            if (!aFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos + 7 * (i + 1)) < 64)
+                    {
+                        if (!board.positions[pos + 7 * (i + 1)])
+                        {
+                            board.chessboard[pos + 7 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 7 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos + 7 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (aFile.Contains(pos + 7 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Up right
+            if (!hFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos + 9 * (i + 1)) < 64)
+                    {
+                        if (!board.positions[pos + 9 * (i + 1)])
+                        {
+                            board.chessboard[pos + 9 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos + 9 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos + 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos + 9 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos + 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (hFile.Contains(pos + 9 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Down left
+            if (!aFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos - 9 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos - 9 * (i + 1)])
+                        {
+                            board.chessboard[pos - 9 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 9 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos - 9 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 9 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (aFile.Contains(pos - 9 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            // Down right
+            if (!hFile.Contains(pos))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    if ((pos - 7 * (i + 1)) > -1)
+                    {
+                        if (!board.positions[pos - 7 * (i + 1)])
+                        {
+                            board.chessboard[pos - 7 * (i + 1)].GetComponent<BoardPiece>().state = 1;
+                        }
+                        else if (!board.positions[pos - 7 * (i + 1)].GetComponent<Piece>().white && white)
+                        {
+                            board.chessboard[pos - 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else if (board.positions[pos - 7 * (i + 1)].GetComponent<Piece>().white && !white)
+                        {
+                            board.chessboard[pos - 7 * (i + 1)].GetComponent<BoardPiece>().state = 2;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        if (hFile.Contains(pos - 7 * (i + 1)))
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        if (king)
+        {
+            // Up
+            if (pos + 8 < 64)
+            {
+                if (!board.positions[pos + 8])
+                {
+                    board.chessboard[pos + 8].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos + 8].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos + 8].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos + 8].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos + 8].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            // Up right
+            if (pos + 9 < 64 && !hFile.Contains(pos))
+            {
+                if (!board.positions[pos + 9])
+                {
+                    board.chessboard[pos + 9].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos + 9].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos + 9].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos + 9].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos + 9].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            // Right
+            if (pos + 1 < 64 && !hFile.Contains(pos))
+            {
+                if (!board.positions[pos + 1])
+                {
+                    board.chessboard[pos + 1].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos + 1].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos + 1].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos + 1].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos + 1].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            // Down right
+            if (pos - 7 > -1 && !hFile.Contains(pos))
+            {
+                if (!board.positions[pos - 7])
+                {
+                    board.chessboard[pos - 7].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos - 7].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos - 7].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos - 7].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos - 7].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            // Down
+            if (pos - 8 > -1)
+            {
+                if (!board.positions[pos - 8])
+                {
+                    board.chessboard[pos - 8].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos - 8].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos - 8].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos - 8].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos - 8].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            // Down left
+            if (pos - 9 > -1 && !aFile.Contains(pos))
+            {
+                if (!board.positions[pos - 9])
+                {
+                    board.chessboard[pos - 9].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos - 9].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos - 9].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos - 9].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos - 9].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            // Left
+            if (pos - 1 > -1 && !aFile.Contains(pos))
+            {
+                if (!board.positions[pos - 1])
+                {
+                    board.chessboard[pos - 1].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos - 1].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos - 1].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos - 1].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos - 1].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            // Up left
+            if (pos + 7 < 64 && !aFile.Contains(pos))
+            {
+                if (!board.positions[pos + 7])
+                {
+                    board.chessboard[pos + 7].GetComponent<BoardPiece>().state = 1;
+                }
+                else if (!board.positions[pos + 7].GetComponent<Piece>().white && white)
+                {
+                    board.chessboard[pos + 7].GetComponent<BoardPiece>().state = 2;
+                }
+                else if (board.positions[pos + 7].GetComponent<Piece>().white && !white)
+                {
+                    board.chessboard[pos + 7].GetComponent<BoardPiece>().state = 2;
+                }
+            }
+            if (white)
+            {
+                // Short castles
+                if (firstMove && !board.positions[5] && !board.positions[6] && board.positions[7])
+                {
+                    if (board.positions[7].GetComponent<Piece>().rook && board.positions[7].GetComponent<Piece>().firstMove && board.positions[7].GetComponent<Piece>().white)
+                    {
+                        board.chessboard[6].GetComponent<BoardPiece>().state = 1;
+                        board.chessboard[6].GetComponent<BoardPiece>().castles = 1;
+                    }
+                }
+                // Long castles
+                if (firstMove && !board.positions[1] && !board.positions[2] && !board.positions[3] && board.positions[0])
+                {
+                    if (board.positions[0].GetComponent<Piece>().rook && board.positions[0].GetComponent<Piece>().firstMove && board.positions[0].GetComponent<Piece>().white)
+                    {
+                        board.chessboard[2].GetComponent<BoardPiece>().state = 1;
+                        board.chessboard[2].GetComponent<BoardPiece>().castles = 2;
+                    }
+                }
+            }
+            if (!white)
+            {
+                // Short castles
+                if (firstMove && !board.positions[61] && !board.positions[62] && board.positions[63])
+                {
+                    if (board.positions[63].GetComponent<Piece>().rook && board.positions[63].GetComponent<Piece>().firstMove && !board.positions[63].GetComponent<Piece>().white)
+                    {
+                        board.chessboard[62].GetComponent<BoardPiece>().state = 1;
+                        board.chessboard[62].GetComponent<BoardPiece>().castles = 3;
+                    }
+                }
+                // Long castles
+                if (firstMove && !board.positions[59] && !board.positions[58] && !board.positions[57] && board.positions[56])
+                {
+                    if (board.positions[56].GetComponent<Piece>().rook && board.positions[56].GetComponent<Piece>().firstMove && !board.positions[56].GetComponent<Piece>().white)
+                    {
+                        board.chessboard[58].GetComponent<BoardPiece>().state = 1;
+                        board.chessboard[58].GetComponent<BoardPiece>().castles = 4;
+                    }
+                }
+            }
+        }
+    }
+}
