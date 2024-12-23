@@ -1,0 +1,290 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System.Linq;
+
+public class Board : MonoBehaviour
+{
+    public List<GameObject> chessboard = new List<GameObject>();
+    public List<GameObject> pieces = new List<GameObject>();
+    public List<GameObject> positions = new List<GameObject>();
+    public bool whiteTurn = true;
+    public List<GameObject> whitePieces = new List<GameObject>();
+    public List<GameObject> blackPieces = new List<GameObject>();
+    public GameObject whiteKing;
+    public GameObject blackKing;
+    public int check = 0; // No checks = 0, black checking white = 1, white checking black = 2
+
+    [HideInInspector]
+    public Piece highlightedPiece;
+
+    private List<GameObject> positionsSave = new List<GameObject>();
+    public List<GameObject> whitePiecesSave = new List<GameObject>();
+    public List<GameObject> blackPiecesSave = new List<GameObject>();
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        for (int i = 0; i < chessboard.Count; i++)
+        {
+            chessboard[i].GetComponent<BoardPiece>().pos = i;
+        }
+        foreach (GameObject piece in pieces)
+        {
+            piece.transform.position = chessboard[piece.GetComponent<Piece>().pos].transform.position;
+            positions[piece.GetComponent<Piece>().pos] = piece;
+        }
+    }
+
+    public void changeHighlightedPiece(Piece newPiece)
+    {
+        if (highlightedPiece)
+        {
+            highlightedPiece.GetComponent<SpriteRenderer>().color = Color.white;
+            if (check == 1)
+            {
+                whiteKing.GetComponent<SpriteRenderer>().color = Color.red;
+            }
+            if (check == 2)
+            {
+                blackKing.GetComponent<SpriteRenderer>().color = Color.red;
+            }
+            ResetBoardState();
+        }
+        highlightedPiece = newPiece;
+        highlightedPiece.GetComponent<SpriteRenderer>().color = Color.yellow;
+    }
+
+    public void moveHighlightedPiece(int newPos, int castles)
+    {
+        validateMove(newPos, castles);
+
+        if (check == 0)
+        {
+            updatePositions(newPos, castles, false);
+
+            whiteTurn = !whiteTurn;
+            foreach (GameObject piece in whitePieces)
+            {
+                piece.GetComponent<BoxCollider2D>().enabled = whiteTurn ? true : false;
+            }
+            foreach (GameObject piece in blackPieces)
+            {
+                piece.GetComponent<BoxCollider2D>().enabled = whiteTurn ? false : true;
+            }
+
+            ResetBoardState();
+            checkforChecks(newPos, false);
+        }
+    }
+
+    public void validateMove(int newPos, int castles)
+    {
+        positionsSave = positions.ToList();
+        whitePiecesSave = whitePieces.ToList();
+        blackPiecesSave = blackPieces.ToList();
+        updatePositions(newPos, castles, true);
+    }
+
+    void updatePositions(int newPos, int castles, bool test)
+    {
+        // Delete captured piece
+        if (positions[newPos])
+        {
+            if (whiteTurn)
+            {
+                blackPieces.Remove(positions[newPos].gameObject);
+            }
+            else
+            {
+                whitePieces.Remove(positions[newPos].gameObject);
+            }
+            if (!test)
+            {
+                Destroy(positions[newPos].gameObject);
+            }
+        }
+
+        // Move piece and update position
+        positions[highlightedPiece.pos] = null;
+        if (!test)
+        {
+            highlightedPiece.pos = newPos;
+        }
+        positions[newPos] = highlightedPiece.gameObject;
+        if (!test)
+        {
+            highlightedPiece.transform.position = chessboard[newPos].transform.position;
+        }
+        if (castles == 1)
+        {
+            positions[5] = positions[7];
+            if (!test)
+            {
+                positions[5].GetComponent<Piece>().pos = 5;
+                positions[5].transform.position = chessboard[5].transform.position;
+            }
+            positions[7] = null;
+        }
+        if (castles == 2)
+        {
+            positions[3] = positions[0];
+            if (!test)
+            {
+                positions[3].GetComponent<Piece>().pos = 3;
+                positions[3].transform.position = chessboard[3].transform.position;
+            }
+            positions[0] = null;
+        }
+        if (castles == 3)
+        {
+            positions[61] = positions[63];
+            if (!test)
+            {
+                positions[61].GetComponent<Piece>().pos = 61;
+                positions[61].transform.position = chessboard[61].transform.position;
+            }
+            positions[63] = null;
+        }
+        if (castles == 4)
+        {
+            positions[59] = positions[56];
+            if (!test)
+            {
+                positions[59].GetComponent<Piece>().pos = 59;
+                positions[59].transform.position = chessboard[59].transform.position;
+            }
+            positions[56] = null;
+        }
+
+        if (!test)
+        {
+            // Resetting variables
+            highlightedPiece.firstMove = false;
+            highlightedPiece.GetComponent<SpriteRenderer>().color = Color.white;
+            highlightedPiece = null;
+        }
+
+        if (test)
+        {
+            checkforChecks(newPos, true);
+        }
+    }
+
+    public void checkforChecks(int newPos, bool test)
+    {
+        ResetBoardState();
+        check = 0;
+        if (whiteTurn)
+        {
+            List<GameObject> pieces = new List<GameObject>(blackPieces);
+            foreach (GameObject piece in blackPieces)
+            {
+                if (positions.Contains(piece))
+                {
+                    pieces.Append(piece);
+                }
+            }
+            foreach (GameObject piece in pieces)
+            {
+                piece.GetComponent<Piece>().CalculateMoves();
+            }
+            if (highlightedPiece)
+            {
+                if (whiteKing == highlightedPiece.gameObject && chessboard[newPos].GetComponent<BoardPiece>().state > 0)
+                {
+                    check = 1;
+                }
+            }
+            else
+            {
+                if (chessboard[whiteKing.GetComponent<Piece>().pos].GetComponent<BoardPiece>().state > 0)
+                {
+                    check = 1;
+                    whiteKing.GetComponent<SpriteRenderer>().color = Color.red;
+                }
+                else
+                {
+                    check = 0;
+                    whiteKing.GetComponent<SpriteRenderer>().color = Color.white;
+                }
+            }
+        }
+        else
+        {
+            List<GameObject> pieces = new List<GameObject>(whitePieces);
+            foreach (GameObject piece in whitePieces)
+            {
+                if (positions.Contains(piece))
+                {
+                    pieces.Append(piece);
+                }
+            }
+            foreach (GameObject piece in pieces)
+            {
+                piece.GetComponent<Piece>().CalculateMoves();
+                Debug.Log(piece);
+            }
+            if (highlightedPiece)
+            {
+                if (blackKing == highlightedPiece.gameObject && chessboard[newPos].GetComponent<BoardPiece>().state > 0)
+                {
+                    check = 2;
+                    Debug.Log("2");
+                }
+                else if (chessboard[blackKing.GetComponent<Piece>().pos].GetComponent<BoardPiece>().state > 0)
+                {
+                    check = 2;
+                    blackKing.GetComponent<SpriteRenderer>().color = Color.red;
+                    Debug.Log("3");
+                }
+                else
+                {
+                    check = 0;
+                    blackKing.GetComponent<SpriteRenderer>().color = Color.white;
+                    Debug.Log("4");
+                }
+            }
+            else
+            {
+                if (chessboard[blackKing.GetComponent<Piece>().pos].GetComponent<BoardPiece>().state > 0)
+                {
+                    check = 2;
+                    blackKing.GetComponent<SpriteRenderer>().color = Color.red;
+                    Debug.Log("5");
+                }
+                else
+                {
+                    check = 0;
+                    blackKing.GetComponent<SpriteRenderer>().color = Color.white;
+                    Debug.Log("6");
+                }
+            }
+        }
+        if (test)
+        {
+            positions = positionsSave.ToList();
+            whitePieces = whitePiecesSave.ToList();
+            blackPieces = blackPiecesSave.ToList();
+        }
+        ResetBoardState();
+    }
+
+    public void UpdateBoardState()
+    {
+        foreach (GameObject boardpiece in chessboard)
+        {
+            boardpiece.GetComponent<BoardPiece>().updateState();
+        }
+    }
+
+    public void ResetBoardState()
+    {
+        foreach (GameObject boardpiece in chessboard)
+        {
+            boardpiece.GetComponent<BoardPiece>().state = 0;
+            boardpiece.GetComponent<BoardPiece>().castles = 0;
+        }
+        UpdateBoardState();
+    }
+}
