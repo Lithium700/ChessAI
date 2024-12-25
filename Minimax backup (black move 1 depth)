@@ -1,0 +1,110 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Move
+{
+    public Piece piece;
+    public int pos;
+    public int castles;
+    public int value;
+    public List<Move> counterMoves;
+
+    public Move(Piece piece, int pos, int castles, int value, List<Move> counterMoves)
+    {
+        this.piece = piece;
+        this.pos = pos;
+        this.castles = castles;
+        this.value = value;
+        this.counterMoves = counterMoves;
+    }
+}
+
+public class Minimax : MonoBehaviour
+{
+    public Board board;
+    public int checkedPositions;
+    public List<Move> turns = new List<Move>();
+    public List<Move> bestMoves = new List<Move>();
+    public int bestValue = -9999;
+    public int maxDepth = 1;
+    public int depth = 0;
+
+    public Text checkedPositionsText;
+    public Text depthText;
+
+    public void playTurn()
+    { 
+        depth = 0;
+        bestValue = -1;
+        checkedPositions = 0;
+        bestMoves.Clear();
+        turns.Clear();
+
+        checkAllBlackMoves();
+
+        Move chosenMove = bestMoves[Random.Range(0, bestMoves.Count-1)];
+        board.changeHighlightedPiece(chosenMove.piece);
+        board.moveHighlightedPiece(chosenMove.pos, chosenMove.castles);
+    }
+
+    void checkAllBlackMoves()
+    {
+        foreach (GameObject piece in board.blackPieces)
+        {
+            Piece pieceComponent = piece.GetComponent<Piece>();
+            pieceComponent.CalculateMoves();
+            checkedPositions += pieceComponent.moves.Count;
+            foreach (BoardPiece move in pieceComponent.moves)
+            {
+                turns.Add(new Move(pieceComponent, move.pos, move.castles, 0, new List<Move>()));
+            }
+
+            board.ResetBoardState();
+        }
+
+        depth += 1;
+        checkedPositionsText.text = "Checked positions\n" + checkedPositions;
+        depthText.text = "Depth = " + depth;
+        evaluateMoves();
+    }
+
+    void evaluateMoves()
+    {
+        foreach (Move move in turns)
+        {
+            List<GameObject> blackPiecesSave = new List<GameObject>(board.blackPieces);
+            List<GameObject> whitePiecesSave = new List<GameObject>(board.whitePieces);
+            List<GameObject> positionsSave = new List<GameObject>(board.positions);
+            board.updatePositions(move.pos, move.castles, move.piece, true);
+            int blackScore = 0;
+            int whiteScore = 0;
+            foreach (GameObject p in board.whitePieces)
+            {
+                whiteScore += p.GetComponent<Piece>().value;
+            }
+            foreach (GameObject p in board.blackPieces)
+            {
+                blackScore += p.GetComponent<Piece>().value;
+            }
+            move.value = blackScore - whiteScore;
+            board.blackPieces = blackPiecesSave;
+            board.whitePieces = whitePiecesSave;
+            board.positions = positionsSave;
+
+            if (move.value == bestValue)
+            {
+                bestMoves.Add(move);
+            }
+            else if (move.value > bestValue)
+            {
+                bestValue = move.value;
+                bestMoves.Clear();
+                bestMoves.Add(move);
+            }
+
+            print(move.value);
+        }
+    }
+}
