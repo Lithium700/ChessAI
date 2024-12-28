@@ -1,0 +1,232 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Move
+{
+    public Piece piece;
+    public int pos;
+    public int castles;
+    public int value;
+    public List<GameObject> boardState;
+
+    public Move(Piece piece, int pos, int castles, int value, List<GameObject> boardState)
+    {
+        this.piece = piece;
+        this.pos = pos;
+        this.castles = castles;
+        this.value = value;
+        this.boardState = boardState;
+    }
+}
+
+public class Minimax : MonoBehaviour
+{
+    public Board board;
+    public int checkedPositions;
+    public List<Move> turns = new List<Move>();
+    public List<int> turnLengths = new List<int>();
+    public List<Move> bestMoves = new List<Move>();
+    public int bestValue = -10000;
+    public int maxDepth = 1;
+    public int depth = 0;
+
+    public Text checkedPositionsText;
+    public Text depthText;
+
+    public void playTurn()
+    { 
+        depth = 0;
+        bestValue = -10000;
+        checkedPositions = 0;
+        bestMoves.Clear();
+        turns.Clear();
+        turnLengths = new List<int>(new int[50]);
+
+        checkAllBlackMoves();
+
+        Move chosenMove = bestMoves[Random.Range(0, bestMoves.Count-1)];
+        board.changeHighlightedPiece(chosenMove.piece);
+        board.moveHighlightedPiece(chosenMove.pos, chosenMove.castles);
+    }
+
+    void checkAllBlackMoves()
+    {
+        if (depth == 0)
+        {
+            foreach (GameObject piece in board.blackPieces)
+            {
+                Piece pieceComponent = piece.GetComponent<Piece>();
+                pieceComponent.CalculateMoves();
+                checkedPositions += pieceComponent.moves.Count;
+                Debug.Log(pieceComponent.moves.Count);
+                if (pieceComponent.moves.Count == 1)
+                {
+                    Debug.LogWarning(pieceComponent.moves[0].pos);
+                }
+                turnLengths[depth] = checkedPositions;
+
+                List<GameObject> blackPiecesSave = new List<GameObject>(board.blackPieces);
+                List<GameObject> whitePiecesSave = new List<GameObject>(board.whitePieces);
+                List<GameObject> positionsSave = new List<GameObject>(board.positions);
+                
+                for (int i = 0; i < pieceComponent.moves.Count; i++)
+                {
+                    Move currentMove = new Move(pieceComponent, pieceComponent.moves[i].pos, pieceComponent.moves[i].castles, 0, new List<GameObject>(board.positions));
+                    board.updatePositions(currentMove.pos, currentMove.castles, pieceComponent, true);
+
+                    int blackScore = 0;
+                    int whiteScore = 0;
+                    foreach (GameObject p in board.whitePieces)
+                    {
+                        whiteScore += p.GetComponent<Piece>().value;
+                    }
+                    foreach (GameObject p in board.blackPieces)
+                    {
+                        blackScore += p.GetComponent<Piece>().value;
+                    }
+                    currentMove.value = blackScore - whiteScore;
+                    board.blackPieces = blackPiecesSave;
+                    board.whitePieces = whitePiecesSave;
+                    board.positions = positionsSave;
+
+                    if (currentMove.value == bestValue)
+                    {
+                        bestMoves.Add(currentMove);
+                    }
+                    else if (currentMove.value > bestValue)
+                    {
+                        bestValue = currentMove.value;
+                        bestMoves.Clear();
+                        bestMoves.Add(currentMove);
+                    }
+
+                    board.ResetBoardState();
+                    turns.Add(currentMove);
+                }
+                pieceComponent.moves.Clear();
+            }
+        }
+        else
+        {
+            for (int i = 0; i < turnLengths[depth-1]; i++)
+            {
+
+            }
+        }
+
+        depth += 1;
+        checkedPositionsText.text = "Checked positions\n" + checkedPositions;
+        depthText.text = "Depth = " + depth;
+        //evaluateMoves(true);
+    }
+
+    //void checkAllWhiteMoves()
+    //{
+    //    foreach (Move turn in turns)
+    //    {
+    //        List<GameObject> blackPiecesSave = new List<GameObject>(board.blackPieces);
+    //        List<GameObject> whitePiecesSave = new List<GameObject>(board.whitePieces);
+    //        List<GameObject> positionsSave = new List<GameObject>(board.positions);
+    //        board.updatePositions(turn.pos, turn.castles, turn.piece, true);
+    //        List<GameObject> blackPiecesTurn = new List<GameObject>(board.blackPieces);
+    //        List<GameObject> whitePiecesTurn = new List<GameObject>(board.whitePieces);
+    //        List<GameObject> positionsTurn = new List<GameObject>(board.positions);
+    //        foreach (GameObject piece in board.whitePieces)
+    //        {
+    //            Piece pieceComponent = piece.GetComponent<Piece>();
+    //            pieceComponent.CalculateMoves();
+    //            checkedPositions += pieceComponent.moves.Count;
+    //            foreach (BoardPiece move in pieceComponent.moves)
+    //            {
+    //                Move newMove = new Move(pieceComponent, move.pos, move.castles, 0, new List<Move>());
+
+    //                if (depth == 0)
+    //                {
+    //                    turns.Add(newMove);
+    //                }
+    //                else
+    //                {
+    //                    turns[depth].counterMoves.Add(newMove);
+    //                }
+    //                int blackScore = 0;
+    //                int whiteScore = 0;
+    //                foreach (GameObject p in board.whitePieces)
+    //                {
+    //                    whiteScore += p.GetComponent<Piece>().value;
+    //                }
+    //                foreach (GameObject p in board.blackPieces)
+    //                {
+    //                    blackScore += p.GetComponent<Piece>().value;
+    //                }
+    //                newMove.value = blackScore - whiteScore;
+    //                board.blackPieces = blackPiecesTurn;
+    //                board.whitePieces = whitePiecesTurn;
+    //                board.positions = positionsTurn;
+    //            }
+
+    //            board.ResetBoardState();
+    //        }
+    //        board.blackPieces = blackPiecesSave;
+    //        board.whitePieces = whitePiecesSave;
+    //        board.positions = positionsSave;
+    //    }
+
+    //    depth += 1;
+    //    checkedPositionsText.text = "Checked positions\n" + checkedPositions;
+    //    depthText.text = "Depth = " + depth;
+    //    evaluateMoves(false);
+    //}
+
+    //void evaluateMoves(bool black)
+    //{
+    //    foreach (Move move in turns)
+    //    {
+    //        board.updatePositions(move.pos, move.castles, move.piece, true);
+    //        for (int i = 0; i < depth; i++)
+    //        {
+    //            //IETS DOEN
+    //        }
+    //        int blackScore = 0;
+    //        int whiteScore = 0;
+    //        foreach (GameObject p in board.whitePieces)
+    //        {
+    //            whiteScore += p.GetComponent<Piece>().value;
+    //        }
+    //        foreach (GameObject p in board.blackPieces)
+    //        {
+    //            blackScore += p.GetComponent<Piece>().value;
+    //        }
+    //        move.value = blackScore - whiteScore;
+    //        board.blackPieces = blackPiecesSave;
+    //        board.whitePieces = whitePiecesSave;
+    //        board.positions = positionsSave;
+
+    //        if (depth >= maxDepth)
+    //        {
+    //            if (move.value == bestValue)
+    //            {
+    //                bestMoves.Add(move);
+    //            }
+    //            else if (move.value > bestValue)
+    //            {
+    //                bestValue = move.value;
+    //                bestMoves.Clear();
+    //                bestMoves.Add(move);
+    //            }
+    //        }
+    //        else
+    //        {
+    //            if (black)
+    //            {
+    //                //checkAllWhiteMoves();
+    //            }
+    //            else
+    //            {
+    //                checkAllBlackMoves();
+    //            }
+    //        }
+    //    }
+    //}
+}
